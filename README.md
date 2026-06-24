@@ -60,7 +60,7 @@ By executing the heavy transformations inside Databricks SQL, the final Power BI
 * **The Problem:** Flagged major delivery issues where shipments to **Roraima (RO) take an average of 26 days**—more than double the national average baseline of **12.3 days**.
 * **The Solution:** Supply chain managers can quickly spot failing transit paths ($22.78 average freight cost per order) and renegotiate contract carrier terms.
 
-![Uploading page2_logistics.png…]()
+<img width="1920" height="1080" alt="page2_logistics" src="https://github.com/user-attachments/assets/eaf86c8d-ac11-4211-8668-0716a557cf37" />
 
 
 ---
