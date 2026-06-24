@@ -1,6 +1,6 @@
-# 🚀 End-to-End E-Commerce Data Platform: Databricks (SQL) to Power BI
+# End-to-End E-Commerce Data Platform: Databricks (SQL) to Power BI
 
-## 🏢 Project Summary
+## Project Summary
 This repository contains a complete data pipeline built to ingest, clean, and model e-commerce data. To keep the Power BI report fast and lightweight, 90% of the heavy data transformation and data warehousing logic was handled upstream inside Databricks using Spark SQL. Power BI was used purely as a clean presentation and reporting layer.
 
 ### Key Skills
