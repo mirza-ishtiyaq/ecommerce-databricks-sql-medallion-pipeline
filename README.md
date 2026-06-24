@@ -40,9 +40,8 @@ This repository contains a complete data pipeline built to ingest, clean, and mo
 * **Pre-calculating Metrics:** Moved resource-heavy calculations (like actual vs. estimated delivery days) directly into the cloud warehouse. This eliminated calculation lag on the front end.
 * **Star Schema Layout:** Organized rows into optimized fact tables (`master_operations` and `lost_revenue`) to keep the BI import sizes compact and highly responsive.
 
-<p align="center">
-  <img src="power_bi_assets/documentation_images/data_model.jpg" alt="Data Warehouse Star Schema Model" width="90%" style="border: 1px solid #e1e4e6; border-radius: 6px;"/>
-</p>
+<img width="1920" height="1080" alt="data_model" src="https://github.com/user-attachments/assets/dbed483f-2eec-4808-89ee-9b04bf4d7ae5" />
+
 
 ---
 
@@ -54,17 +53,15 @@ By executing the heavy transformations inside Databricks SQL, the final Power BI
 * **The Problem:** Found an **8.12% Revenue Leakage Rate**, showing that **$97.24K** in revenue is lost or stuck in canceled/unavailable orders out of **$1.20M** total gross pipeline revenue.
 * **The Solution:** Financial teams can track leakage trends month-over-month to audit and fix payment gateway or checkout bugs.
 
-<p align="center">
-  <img src="power_bi_assets/documentation_images/page1_finance.jpg" alt="Financial and Revenue Performance Dashboard" width="90%" style="border: 1px solid #e1e4e6; border-radius: 6px;"/>
-</p>
+<img width="1920" height="1080" alt="page1_finance" src="https://github.com/user-attachments/assets/bd6da027-046f-4603-bbc8-79d547652402" />
+
 
 ### 🚚 Supply Chain & Logistics Operations
 * **The Problem:** Flagged major delivery issues where shipments to **Roraima (RO) take an average of 26 days**—more than double the national average baseline of **12.3 days**.
 * **The Solution:** Supply chain managers can quickly spot failing transit paths ($22.78 average freight cost per order) and renegotiate contract carrier terms.
 
-<p align="center">
-  <img src="power_bi_assets/documentation_images/page2_logistics.jpg" alt="Supply Chain and Logistics Dashboard" width="90%" style="border: 1px solid #e1e4e6; border-radius: 6px;"/>
-</p>
+![Uploading page2_logistics.png…]()
+
 
 ---
 
