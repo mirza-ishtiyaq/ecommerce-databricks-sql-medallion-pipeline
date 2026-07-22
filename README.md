@@ -1,7 +1,7 @@
-# End-to-End E-Commerce Data Platform: Databricks (SQL) to Power BI
+# Enterprise CRM & Supply Chain Data Platform: Databricks to Power BI
 
 ## Project Summary
-This repository contains a complete data pipeline built to ingest, clean, and model e-commerce data. To keep the Power BI report fast and lightweight, 90% of the heavy data transformation and data warehousing logic was handled upstream inside Databricks using Spark SQL. Power BI was used purely as a clean presentation and reporting layer.
+This repository contains a complete data pipeline built to ingest, clean, and unify fragmented enterprise data from Microsoft Dynamics 365 (CRM) and SharePoint logs. To keep the Power BI report fast and lightweight, 90% of the heavy data transformation and data warehousing logic was handled upstream inside Databricks using Spark SQL Medallion Architecture.
 
 ### Key Skills
 * **Data Architecture:** Medallion framework design (Bronze, Silver, and Gold layers).
@@ -14,7 +14,7 @@ This repository contains a complete data pipeline built to ingest, clean, and mo
 ## Data Pipeline Flow
 
 ```text
-       [Raw CSV Files] 
+       [Dynamics 365 CRM & SharePoint Raw Extracts]
                  │
                  ▼
       🟤 BRONZE LAYER : Raw Data Ingestion & Storage (`01_bronze_ingestion.sql`)
@@ -30,11 +30,11 @@ This repository contains a complete data pipeline built to ingest, clean, and mo
 ```
 
 ### 🟤 1. Bronze Layer: Raw Data Ingestion
-* **What was done:** Imported multi-table operational e-commerce data directly into Databricks as **Delta Lake** tables. This secured the raw data layout, ensured ACID compliance, and preserved clear data lineage.
+* **What was done:** Imported fragmented, multi-table operational data (simulating raw Dynamics 365 CRM extracts and SharePoint fulfillment logs) directly into Databricks as Delta Lake tables. This secured the raw data layout, ensured ACID compliance, and preserved clear data lineage.
 
 ### ⚪ 2. Silver Layer: Upstream SQL Cleaning
 * **Fixing Timestamps:** Converted text-based date columns into structured standard `TIMESTAMP` formats to calculate shipping speeds accurately.
-* **Data Quality Checks:** Filtered out incomplete or corrupted rows missing critical keys like `order_id` or `customer_id` to safeguard relational integrity.
+* **Data Quality Checks:** Filtered out incomplete or corrupted CRM records missing critical mapping keys (like order_id or customer_guid) to safeguard relational integrity across disparate systems.
 
 ### 🟡 3. Gold Layer: Data Warehousing & Modeling
 * **Pre-calculating Metrics:** Moved resource-heavy calculations (like actual vs. estimated delivery days) directly into the cloud warehouse. This eliminated calculation lag on the front end.
@@ -73,7 +73,7 @@ By executing the heavy transformations inside Databricks SQL, the final Power BI
 │   ├── 03_gold_star_schema.sql        <- Analytical Star Schema Layouts
 │   └── 04_executive_adhoc_analysis.sql <- Business Analysis Queries
 └── 📂 power_bi_assets/
-    ├── Ecommerce Olist Dashboard.pbix  <- Final Report File
+    ├── ├── Enterprise_Fulfillment_Dashboard.pbix  <- Final Report File
     └── 📂 documentation_images/       <- Embedded Dashboard Screenshots
 ```
 
@@ -90,8 +90,8 @@ WITH monthly_revenue_ledger AS (
         LAG(ROUND(SUM(oi.price), 2)) OVER (
             ORDER BY DATE_FORMAT(CAST(o.order_purchase_timestamp AS TIMESTAMP), 'yyyy-MM') ASC
         ) AS previous_month_revenue
-    FROM ecommerce_logistics.silver.olist_orders o
-    INNER JOIN ecommerce_logistics.silver.olist_order_items oi ON o.order_id = oi.order_id
+    FROM enterprise_crm.silver.logistics_orders o
+    INNER JOIN enterprise_crm.silver.logistics_order_items oi ON o.order_id = oi.order_id
     WHERE o.order_status = 'delivered'
     GROUP BY financial_month
 )
