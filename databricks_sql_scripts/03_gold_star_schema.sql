@@ -12,6 +12,7 @@ SELECT
     o.order_id,
     o.order_status,
     oi.product_id,
+    oi.price,
     oi.freight_value,
     c.customer_state AS destination_state,
     s.seller_state AS origin_state,
@@ -21,7 +22,12 @@ SELECT
     o.order_estimated_delivery_date,
     -- Upstream performance modeling: Pre-calculating transit day intervals
     DATEDIFF(o.order_delivered_customer_date, o.order_purchase_timestamp) AS actual_delivery_days,
-    DATEDIFF(o.order_estimated_delivery_date, o.order_purchase_timestamp) AS promised_delivery_days
+    DATEDIFF(o.order_estimated_delivery_date, o.order_purchase_timestamp) AS promised_delivery_days,
+    -- Upstream SLA performance flag
+    CASE 
+        WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 'Late'
+        ELSE 'On-Time'
+    END AS delivery_status
 FROM ecommerce_logistics.silver.olist_orders o
 LEFT JOIN ecommerce_logistics.silver.olist_order_items oi   ON o.order_id = oi.order_id
 LEFT JOIN ecommerce_logistics.silver.olist_customers c     ON o.customer_id = c.customer_id

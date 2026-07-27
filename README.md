@@ -1,86 +1,127 @@
-# Enterprise CRM & Supply Chain Data Platform: Databricks to Power BI
+# Enterprise E-Commerce & Supply Chain Analytics (Databricks SQL Medallion Architecture to Power BI)
 
-## Project Summary
-This repository contains a complete data pipeline built to ingest, clean, and unify fragmented enterprise data from Microsoft Dynamics 365 (CRM) and SharePoint logs. To keep the Power BI report fast and lightweight, 90% of the heavy data transformation and data warehousing logic was handled upstream inside Databricks using Spark SQL Medallion Architecture.
+## Executive Summary & Business Context
+In multi-channel e-commerce operations, reporting directly off raw transactional databases creates two severe bottlenecks: dashboard query latency and fragmented business logic. In this project, I analyzed over **99,000 orders** generating **$1.20M in gross pipeline revenue** from Brazilian e-commerce operations (Olist dataset). 
 
-### Key Skills
-* **Data Architecture:** Medallion framework design (Bronze, Silver, and Gold layers).
-* **Data Engineering:** Query optimization, Delta Lake management, and advanced Spark SQL.
-* **Data Modeling:** Building analytical star schemas (Fact and Dimension tables).
-* **Business Intelligence:** Preparing report views, dashboard UX design, and DAX modeling.
+The primary business objectives were to solve two operational challenges:
+1. **Financial Revenue Leakage:** Isolating why **$97.24K (8.12% of total pipeline revenue)** was trapped or lost in canceled and unavailable orders.
+2. **Logistics & Transit Bottlenecks:** Identifying why regional delivery times in remote states like Roraima (RR) averaged **26.0 days**—more than double the national baseline of **12.3 days**—with freight costs averaging **$22.78 per order**.
+
+To keep front-end Power BI dashboards fast and responsive, I engineered an upstream **Databricks SQL Medallion Architecture (Bronze -> Silver -> Gold)** using Delta Lake. Shifting 90% of data cleaning, temporal conversions, and star schema modeling into the cloud warehouse eliminated client-side calculation lag completely.
 
 ---
 
-## Data Pipeline Flow
+## Technical Stack & Architecture
+* **Data Platform:** Databricks / Spark SQL
+* **Storage Format:** Delta Lake (ACID-compliant)
+* **Data Warehousing:** Medallion Architecture (Bronze, Silver, Gold Layers)
+* **Business Intelligence:** Power BI (Import Mode / Star Schema Data Model)
 
-```text
-       [Dynamics 365 CRM & SharePoint Raw Extracts]
-                 │
-                 ▼
-      🟤 BRONZE LAYER : Raw Data Ingestion & Storage (`01_bronze_ingestion.sql`)
-                 │
-                 ▼ (Data Cleaning, Schema Validation, Handling Nulls)
-      ⚪ SILVER LAYER : Cleaned Operational Tables (`02_silver_transformations.sql`)
-                 │
-                 ▼ (Joining Tables & Building Star Schema Views)
-      🟡 GOLD LAYER   : Analytics-Ready Fact Tables (`03_gold_star_schema.sql`)
-                 │
-                 ▼ (Optimized Connection for Reporting)
-      📊 POWER BI     : High-Performance Executive Dashboards
 ```
-
-### 🟤 1. Bronze Layer: Raw Data Ingestion
-* **What was done:** Imported fragmented, multi-table operational data (simulating raw Dynamics 365 CRM extracts and SharePoint fulfillment logs) directly into Databricks as Delta Lake tables. This secured the raw data layout, ensured ACID compliance, and preserved clear data lineage.
-
-### ⚪ 2. Silver Layer: Upstream SQL Cleaning
-* **Fixing Timestamps:** Converted text-based date columns into structured standard `TIMESTAMP` formats to calculate shipping speeds accurately.
-* **Data Quality Checks:** Filtered out incomplete or corrupted CRM records missing critical mapping keys (like order_id or customer_guid) to safeguard relational integrity across disparate systems.
-
-### 🟡 3. Gold Layer: Data Warehousing & Modeling
-* **Pre-calculating Metrics:** Moved resource-heavy calculations (like actual vs. estimated delivery days) directly into the cloud warehouse. This eliminated calculation lag on the front end.
-* **Star Schema Layout:** Organized rows into optimized fact tables (`master_operations` and `lost_revenue`) to keep the BI import sizes compact and highly responsive.
-
-<img width="1920" height="1080" alt="data_model" src="https://github.com/user-attachments/assets/dbed483f-2eec-4808-89ee-9b04bf4d7ae5" />
-
-
----
-
-## 💡 Business Insights & Impact
-
-By executing the heavy transformations inside Databricks SQL, the final Power BI dashboard functions instantly without latency:
-
-### 📈 Financial & Revenue Performance
-* **The Problem:** Found an **8.12% Revenue Leakage Rate**, showing that **$97.24K** in revenue is lost or stuck in canceled/unavailable orders out of **$1.20M** total gross pipeline revenue.
-* **The Solution:** Financial teams can track leakage trends month-over-month to audit and fix payment gateway or checkout bugs.
-
-<img width="1920" height="1080" alt="page1_finance" src="https://github.com/user-attachments/assets/bd6da027-046f-4603-bbc8-79d547652402" />
-
-
-### 🚚 Supply Chain & Logistics Operations
-* **The Problem:** Flagged major delivery issues where shipments to **Roraima (RO) take an average of 26 days**—more than double the national average baseline of **12.3 days**.
-* **The Solution:** Supply chain managers can quickly spot failing transit paths ($22.78 average freight cost per order) and renegotiate contract carrier terms.
-
-<img width="1920" height="1080" alt="page2_logistics" src="https://github.com/user-attachments/assets/eaf86c8d-ac11-4211-8668-0716a557cf37" />
-
-
----
-
-## 📂 Folder Layout
-```text
-├── 📂 databricks_sql_scripts/
-│   ├── 01_bronze_ingestion.sql        <- Raw Data Landing & Catalog Mapping
-│   ├── 02_silver_transformations.sql   <- Data Type Conversion & Null Handling
-│   ├── 03_gold_star_schema.sql        <- Analytical Star Schema Layouts
-│   └── 04_executive_adhoc_analysis.sql <- Business Analysis Queries
-└── 📂 power_bi_assets/
-    ├── ├── Enterprise_Fulfillment_Dashboard.pbix  <- Final Report File
-    └── 📂 documentation_images/       <- Embedded Dashboard Screenshots
+ecommerce-databricks-sql-medallion-pipeline/
+├── README.md                                          # Documentation & executive insights
+├── databricks_sql_scripts/
+│   ├── 01_bronze_ingestion.sql                        # Raw Delta table migration
+│   ├── 02_silver_transformations.sql                 # Data sanitization & timestamp parsing
+│   ├── 03_gold_star_schema.sql                        # Analytics-ready Fact tables & Star Schema
+│   └── 04_executive_adhoc_analysis.sql                # Advanced C-Suite ad-hoc SQL queries
+└── power_bi_assets/
+    └── documentation_images/
+        ├── data_model.png                             # Star Schema ERD Diagram
+        ├── page1_finance.png                          # Executive Financial Performance Dashboard
+        └── page2_logistics.png                        # Logistics & Supply Chain Dashboard
 ```
 
 ---
 
-## Advanced SQL Sample: Month-over-Month Growth Calculation
-This snippet from `04_executive_adhoc_analysis.sql` shows how historical performance velocity is tracked using SQL window functions (`LAG`):
+## Pipeline Data Flow
+
+```text
+       [Raw Transactional & Operational Extracts]
+                         │
+                         ▼
+       🟤 BRONZE LAYER  : Raw Delta Lake Migration (`01_bronze_ingestion.sql`)
+                         │
+                         ▼ (Timestamp Parsing, Schema Enforcement, Null Filtering)
+       ⚪ SILVER LAYER  : Cleaned Operational Tables (`02_silver_transformations.sql`)
+                         │
+                         ▼ (Star Schema Joins & Upstream Performance Pre-Calculations)
+       🟡 GOLD LAYER    : Production Fact Tables (`03_gold_star_schema.sql`)
+                         │
+                         ▼ (Lightweight Import / DirectQuery)
+       📊 POWER BI      : Executive Financial & Logistics Dashboards
+```
+
+---
+
+## Engineering Deep-Dive by Layer
+
+### 🟤 1. Bronze Layer: Ingestion & Lineage (`01_bronze_ingestion.sql`)
+* Migrated raw transactional landing tables into the `ecommerce_logistics.bronze` catalog.
+* Stored data as Delta Lake tables to establish ACID compliance, data versioning, and clear lineage across orders, customers, items, products, sellers, and geolocation datasets.
+
+### ⚪ 2. Silver Layer: Sanitization & Type Conversion (`02_silver_transformations.sql`)
+* **Timestamp Normalization:** Text-formatted date fields (e.g., `order_purchase_timestamp`) were converted to Spark SQL `TIMESTAMP` data types to enable high-precision date arithmetic.
+* **Integrity Filtering:** Enforced null-handling checks on primary join keys (`order_id IS NOT NULL AND customer_id IS NOT NULL`) to protect foreign key relationships downstream.
+
+```sql
+CREATE OR REPLACE TABLE ecommerce_logistics.silver.olist_orders AS
+SELECT
+    order_id,
+    customer_id,
+    order_status,
+    -- Normalizing string date values to standard TIMESTAMP types
+    CAST(order_purchase_timestamp AS TIMESTAMP) AS order_purchase_timestamp,
+    CAST(order_approved_at AS TIMESTAMP) AS order_approved_at,
+    CAST(order_delivered_carrier_date AS TIMESTAMP) AS order_delivered_carrier_date,
+    CAST(order_delivered_customer_date AS TIMESTAMP) AS order_delivered_customer_date,
+    CAST(order_estimated_delivery_date AS TIMESTAMP) AS order_estimated_delivery_date
+FROM ecommerce_logistics.bronze.olist_orders
+WHERE order_id IS NOT NULL
+  AND customer_id IS NOT NULL;
+```
+
+### 🟡 3. Gold Layer: Star Schema & Upstream Metrics (`03_gold_star_schema.sql`)
+* **Pre-Computing Transit Days & Delivery Status:** Calculated `actual_delivery_days`, `promised_delivery_days`, and an upstream `delivery_status` SLA flag directly in the `master_operations` Fact table.
+* **Financial Risk Fact Table:** Built a focused `lost_revenue` Fact table isolating canceled and unavailable orders for immediate auditing.
+
+```sql
+CREATE OR REPLACE TABLE ecommerce_logistics.gold.master_operations AS
+SELECT
+    o.order_id,
+    o.order_status,
+    oi.product_id,
+    oi.price,
+    oi.freight_value,
+    c.customer_state AS destination_state,
+    s.seller_state AS origin_state,
+    p.product_weight_g,
+    o.order_purchase_timestamp,
+    o.order_delivered_customer_date,
+    o.order_estimated_delivery_date,
+    -- Pre-calculating transit intervals upstream
+    DATEDIFF(o.order_delivered_customer_date, o.order_purchase_timestamp) AS actual_delivery_days,
+    DATEDIFF(o.order_estimated_delivery_date, o.order_purchase_timestamp) AS promised_delivery_days,
+    -- Pre-calculating SLA delivery status flag
+    CASE 
+        WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 'Late'
+        ELSE 'On-Time'
+    END AS delivery_status
+FROM ecommerce_logistics.silver.olist_orders o
+LEFT JOIN ecommerce_logistics.silver.olist_order_items oi ON o.order_id = oi.order_id
+LEFT JOIN ecommerce_logistics.silver.olist_customers c   ON o.customer_id = c.customer_id
+LEFT JOIN ecommerce_logistics.silver.olist_sellers s     ON oi.seller_id = s.seller_id
+LEFT JOIN ecommerce_logistics.silver.olist_products p     ON oi.product_id = p.product_id
+WHERE o.order_status = 'delivered'
+  AND o.order_delivered_customer_date IS NOT NULL;
+```
+
+---
+
+## Advanced SQL Analysis (`04_executive_adhoc_analysis.sql`)
+
+### Month-over-Month Growth Velocity (SQL Window Functions)
+To evaluate sales momentum for executive reporting, I wrote a CTE query utilizing the `LAG()` window function to track monthly revenue growth rates:
 
 ```sql
 WITH monthly_revenue_ledger AS (
@@ -90,8 +131,8 @@ WITH monthly_revenue_ledger AS (
         LAG(ROUND(SUM(oi.price), 2)) OVER (
             ORDER BY DATE_FORMAT(CAST(o.order_purchase_timestamp AS TIMESTAMP), 'yyyy-MM') ASC
         ) AS previous_month_revenue
-    FROM enterprise_crm.silver.logistics_orders o
-    INNER JOIN enterprise_crm.silver.logistics_order_items oi ON o.order_id = oi.order_id
+    FROM ecommerce_logistics.silver.olist_orders o
+    INNER JOIN ecommerce_logistics.silver.olist_order_items oi ON o.order_id = oi.order_id
     WHERE o.order_status = 'delivered'
     GROUP BY financial_month
 )
@@ -106,5 +147,29 @@ ORDER BY financial_month;
 
 ---
 
-### Author
-**Mirza Ishtiyaq Baig** *Data Analyst / Analytics Engineer*
+## Data Model & Dashboard Highlights
+
+### 1. Power BI Analytical Data Model
+By pushing aggregations to the Gold layer in Databricks, the resulting Star Schema in Power BI features clean 1-to-many relationships without bidirectional filter ambiguities:
+
+![Data Model](./power_bi_assets/documentation_images/data_model.png)
+
+### 2. Financial & Revenue Performance Dashboard
+* **Gross Pipeline Revenue:** **$1.20M**
+* **Revenue Leakage:** **$97.24K (8.12% leakage rate)** stuck in unfulfilled order states.
+* Enables finance teams to track monthly leakage trends and identify payment gateway drop-offs.
+
+![Financial Dashboard](./power_bi_assets/documentation_images/page1_finance.png)
+
+### 3. Supply Chain & Logistics Dashboard
+* **National Average Transit Time:** **12.3 Days**
+* **Regional Bottleneck:** Orders delivered to **Roraima (RR)** average **26.0 days**, driving up logistics costs and customer friction.
+* Enables logistics teams to review carrier performance by origin-destination state lanes.
+
+![Logistics Dashboard](./power_bi_assets/documentation_images/page2_logistics.png)
+
+---
+
+## Author & Project Info
+* **Author:** Mirza Ishtiyaq Baig *(Data Analyst / Analytics Engineer)*
+* **Repository:** `ecommerce-databricks-sql-medallion-pipeline`
