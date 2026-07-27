@@ -40,27 +40,27 @@ ecommerce-databricks-sql-medallion-pipeline/
        [Raw Transactional & Operational Extracts]
                          │
                          ▼
-       🟤 BRONZE LAYER  : Raw Delta Lake Migration (`01_bronze_ingestion.sql`)
+       BRONZE LAYER     : Raw Delta Lake Migration (`01_bronze_ingestion.sql`)
                          │
                          ▼ (Timestamp Parsing, Schema Enforcement, Null Filtering)
-       ⚪ SILVER LAYER  : Cleaned Operational Tables (`02_silver_transformations.sql`)
+       SILVER LAYER     : Cleaned Operational Tables (`02_silver_transformations.sql`)
                          │
                          ▼ (Star Schema Joins & Upstream Performance Pre-Calculations)
-       🟡 GOLD LAYER    : Production Fact Tables (`03_gold_star_schema.sql`)
+       GOLD LAYER       : Production Fact Tables (`03_gold_star_schema.sql`)
                          │
                          ▼ (Lightweight Import / DirectQuery)
-       📊 POWER BI      : Executive Financial & Logistics Dashboards
+       POWER BI         : Executive Financial & Logistics Dashboards
 ```
 
 ---
 
 ## Engineering Deep-Dive by Layer
 
-### 🟤 1. Bronze Layer: Ingestion & Lineage (`01_bronze_ingestion.sql`)
+### 1. Bronze Layer: Ingestion & Lineage (`01_bronze_ingestion.sql`)
 * Migrated raw transactional landing tables into the `ecommerce_logistics.bronze` catalog.
 * Stored data as Delta Lake tables to establish ACID compliance, data versioning, and clear lineage across orders, customers, items, products, sellers, and geolocation datasets.
 
-### ⚪ 2. Silver Layer: Sanitization & Type Conversion (`02_silver_transformations.sql`)
+### 2. Silver Layer: Sanitization & Type Conversion (`02_silver_transformations.sql`)
 * **Timestamp Normalization:** Text-formatted date fields (e.g., `order_purchase_timestamp`) were converted to Spark SQL `TIMESTAMP` data types to enable high-precision date arithmetic.
 * **Integrity Filtering:** Enforced null-handling checks on primary join keys (`order_id IS NOT NULL AND customer_id IS NOT NULL`) to protect foreign key relationships downstream.
 
@@ -81,7 +81,7 @@ WHERE order_id IS NOT NULL
   AND customer_id IS NOT NULL;
 ```
 
-### 🟡 3. Gold Layer: Star Schema & Upstream Metrics (`03_gold_star_schema.sql`)
+### 3. Gold Layer: Star Schema & Upstream Metrics (`03_gold_star_schema.sql`)
 * **Pre-Computing Transit Days & Delivery Status:** Calculated `actual_delivery_days`, `promised_delivery_days`, and an upstream `delivery_status` SLA flag directly in the `master_operations` Fact table.
 * **Financial Risk Fact Table:** Built a focused `lost_revenue` Fact table isolating canceled and unavailable orders for immediate auditing.
 
