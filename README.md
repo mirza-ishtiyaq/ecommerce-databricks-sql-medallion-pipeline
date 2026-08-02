@@ -5,9 +5,11 @@ In multi-channel e-commerce operations, reporting directly off raw transactional
 
 The primary business objectives were to solve two operational challenges:
 1. **Financial Revenue Leakage:** Isolating why **$97.24K (8.12% of total pipeline revenue)** was trapped or lost in canceled and unavailable orders.
-2. **Logistics & Transit Bottlenecks:** Identifying why regional delivery times in remote states like Roraima (RR) averaged **26.0 days**—more than double the national baseline of **12.3 days**—with freight costs averaging **$22.78 per order**.
+2. **Logistics & Transit Bottlenecks:** Identifying why regional delivery times in remote states like Roraima (RO) averaged **26.0 days**—more than double the national baseline of **12.3 days**—with freight costs averaging **$22.78 per order**.
 
 To keep front-end Power BI dashboards fast and responsive, I engineered an upstream **Databricks SQL Medallion Architecture (Bronze -> Silver -> Gold)** using Delta Lake. Shifting 90% of data cleaning, temporal conversions, and star schema modeling into the cloud warehouse eliminated client-side calculation lag completely.
+
+> **Dataset:** This project uses the public [Brazilian E-Commerce (Olist) dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) from Kaggle. Raw CSVs are **not** checked into this repo due to file size (`data/datasets/` is an intentionally empty placeholder) — download the dataset from Kaggle and land it in your own Bronze source location to reproduce the pipeline end-to-end.
 
 ---
 
@@ -18,18 +20,23 @@ To keep front-end Power BI dashboards fast and responsive, I engineered an upstr
 * **Business Intelligence:** Power BI (Import Mode / Star Schema Data Model)
 
 ```
-ecommerce-databricks-sql-medallion-pipeline/
+databricks-medallion-architecture/
 ├── README.md                                          # Documentation & executive insights
-├── databricks_sql_scripts/
-│   ├── 01_bronze_ingestion.sql                        # Raw Delta table migration
-│   ├── 02_silver_transformations.sql                 # Data sanitization & timestamp parsing
-│   ├── 03_gold_star_schema.sql                        # Analytics-ready Fact tables & Star Schema
-│   └── 04_executive_adhoc_analysis.sql                # Advanced C-Suite ad-hoc SQL queries
-└── power_bi_assets/
-    └── documentation_images/
-        ├── data_model.png                             # Star Schema ERD Diagram
-        ├── page1_finance.png                          # Executive Financial Performance Dashboard
-        └── page2_logistics.png                        # Logistics & Supply Chain Dashboard
+├── LICENSE
+├── dashboards/
+│   └── Ecommerce Olist Dashboard.pbix                 # Power BI interactive report (download & open in Power BI Desktop)
+├── data/
+│   └── datasets/                                      # Intentionally empty — see Dataset note above
+├── docs/
+│   └── images/
+│       ├── data_model.png                             # Star Schema ERD Diagram
+│       ├── page1_finance.png                          # Executive Financial Performance Dashboard
+│       └── page2_logistics.png                        # Logistics & Supply Chain Dashboard
+└── sql/
+    ├── 01_bronze_ingestion.sql                        # Raw Delta table migration
+    ├── 02_silver_transformations.sql                  # Data sanitization & timestamp parsing
+    ├── 03_gold_star_schema.sql                        # Analytics-ready Fact tables & Star Schema
+    └── 04_executive_adhoc_analysis.sql                # Advanced C-Suite ad-hoc SQL queries
 ```
 
 ---
@@ -149,27 +156,31 @@ ORDER BY financial_month;
 
 ## Data Model & Dashboard Highlights
 
+> **Download the interactive report:** [`dashboards/Ecommerce Olist Dashboard.pbix`](./dashboards/Ecommerce%20Olist%20Dashboard.pbix) (open in Power BI Desktop to explore both pages live).
+
 ### 1. Power BI Analytical Data Model
 By pushing aggregations to the Gold layer in Databricks, the resulting Star Schema in Power BI features clean 1-to-many relationships without bidirectional filter ambiguities:
 
-![Data Model](./power_bi_assets/documentation_images/data_model.png)
+![Data Model](./docs/images/data_model.png)
 
 ### 2. Financial & Revenue Performance Dashboard
 * **Gross Pipeline Revenue:** **$1.20M**
 * **Revenue Leakage:** **$97.24K (8.12% leakage rate)** stuck in unfulfilled order states.
 * Enables finance teams to track monthly leakage trends and identify payment gateway drop-offs.
 
-![Financial Dashboard](./power_bi_assets/documentation_images/page1_finance.png)
+![Financial Dashboard](./docs/images/page1_finance.png)
 
 ### 3. Supply Chain & Logistics Dashboard
 * **National Average Transit Time:** **12.3 Days**
-* **Regional Bottleneck:** Orders delivered to **Roraima (RR)** average **26.0 days**, driving up logistics costs and customer friction.
+* **Regional Bottleneck:** Orders delivered to **Roraima (RO)** average **26.0 days**, driving up logistics costs and customer friction.
 * Enables logistics teams to review carrier performance by origin-destination state lanes.
 
-![Logistics Dashboard](./power_bi_assets/documentation_images/page2_logistics.png)
+![Logistics Dashboard](./docs/images/page2_logistics.png)
 
 ---
 
 ## Author & Project Info
-* **Author:** Mirza Ishtiyaq Baig *(Data Analyst / Analytics Engineer)*
-* **Repository:** `ecommerce-databricks-sql-medallion-pipeline`
+**Author:** Mirza Ishtiyaq Baig — Data Analyst / Analytics Engineer  
+**LinkedIn:** https://www.linkedin.com/in/mirzaishtiyaqbaig/  
+**Email:** mirzaishtiyaqbaig1@gmail.com  
+**GitHub:** https://github.com/mirza-ishtiyaq
