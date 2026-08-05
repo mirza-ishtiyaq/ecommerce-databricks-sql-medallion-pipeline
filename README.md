@@ -1,14 +1,23 @@
-# E-Commerce Fulfilment Medallion Pipeline
+# E-Commerce Fulfilment Medallion Pipeline & Revenue Leakage Audit
 
 ![Star Schema Data Model](./docs/images/data_model.png)
 
+> **Resume Metrics Alignment**
+> This repository is the source of truth for the following resume claims:
+> - **$97.24K in unrealised revenue** surfaced — 8.12% of a $1.20M gross fulfilment pipeline
+> - **26-day regional transit outlier** (Rondônia) isolated against a 12.3-day national baseline
+> - **Medallion Architecture** (Bronze → Silver → Gold) on **Databricks / Delta Lake**
+> - **Star-schema** fact tables with pre-computed **OTIF / SLA delivery flags** pushed upstream of Power BI
+
 ---
 
-## The Question
+## Business Problem
 
-In a $1.20M e-commerce pipeline, why is **$97.24K (8.12%)** of gross revenue trapped in canceled and unavailable order states? And why do regional delivery times in remote states average **26 days** — more than double the **12.3-day** national baseline — driving up freight costs and customer friction?
+E-commerce fulfilment teams operating on raw transactional databases faced two bottlenecks:
+1. **Dashboard latency:** Reporting directly off un-indexed source tables created slow Power BI refresh cycles.
+2. **Fragmented business logic:** SLA flags, revenue-loss classification, and transit-time calculations were embedded in Power BI DAX instead of being resolved upstream in the warehouse — making them untestable and unreproducible.
 
-Reporting directly off raw transactional databases created two bottlenecks: dashboard query latency and fragmented business logic pushed into Power BI instead of being resolved upstream in the warehouse.
+The result: leadership had **no single source of truth** for order fulfilment performance, no visibility into which regional lanes were failing OTIF targets, and no quantified view of revenue trapped in non-delivered order states.
 
 ---
 
@@ -47,6 +56,38 @@ Simulated operational datasets: the public [Brazilian E-Commerce (Olist) dataset
 
 ---
 
+## Methodology
+
+### Bronze Layer (Raw Ingestion)
+All 6 Olist source tables are migrated into a Delta Lake catalog (`ecommerce_logistics.bronze`) with no transformation — establishing data lineage and ACID-compliant storage.
+
+### Silver Layer (Schema Enforcement & Cleansing)
+- **Temporal normalization:** All 5 date/time columns in `olist_orders` cast from `STRING` to `TIMESTAMP`
+- **Null filtering:** Orders missing `order_id` or `customer_id` are excluded
+- **Dimensional pass-through:** Customer, seller, product, and geolocation tables promoted with schema validation
+
+### Gold Layer (Star Schema & Business Logic)
+Two purpose-built fact tables, pre-computed for Power BI Import Mode:
+
+1. **`master_operations`** — Fulfilment performance fact table
+   - Joins orders → items → customers → sellers → products via `LEFT JOIN`
+   - Pre-computes `actual_delivery_days` and `promised_delivery_days` via `DATEDIFF()`
+   - Pre-computes `delivery_status` (`'Late'` / `'On-Time'`) — an upstream **OTIF flag** that eliminates the need for DAX-level SLA logic
+   - Filtered to `order_status = 'delivered'` only
+
+2. **`lost_revenue`** — Financial leakage fact table
+   - Isolates `canceled` and `unavailable` orders with their associated `price` values
+   - Surfaces the **$97.24K unrealised revenue** figure cited on my resume
+
+### Ad-Hoc Executive Analytics
+4 stakeholder-driven queries using `RANK()`, `LAG()`, and `CASE` window functions:
+- Top 5 transit bottleneck lanes (VP of Logistics)
+- Top 5 revenue-generating categories (CMO)
+- #1 product vertical per state (VP of Sales)
+- Month-over-Month revenue growth velocity (CFO)
+
+---
+
 ## What It Found
 
 | Finding | Value |
@@ -74,8 +115,8 @@ Simulated operational datasets: the public [Brazilian E-Commerce (Olist) dataset
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/mirza-ishtiyaq/databricks-medallion-architecture.git
-cd databricks-medallion-architecture
+git clone https://github.com/mirza-ishtiyaq/ecommerce-medallion-pipeline.git
+cd ecommerce-medallion-pipeline
 
 # 2. Upload Olist CSV files to your Databricks workspace
 # Place the downloaded Kaggle CSVs in your DBFS or Unity Catalog volume
@@ -109,13 +150,14 @@ cd databricks-medallion-architecture
 ## Repository Structure
 
 ```
-databricks-medallion-architecture/
+ecommerce-medallion-pipeline/
 ├── README.md
 ├── LICENSE
 ├── dashboards/
 │   └── Ecommerce Olist Dashboard.pbix
 ├── data/
-│   └── datasets/                              # Intentionally empty — download from Kaggle
+│   ├── data_dictionary.md                         # Field-level documentation for all tables
+│   └── datasets/                                  # Intentionally empty — download from Kaggle
 ├── docs/
 │   └── images/
 │       ├── data_model.png
@@ -130,6 +172,6 @@ databricks-medallion-architecture/
 
 ---
 
-**Author:** Mirza Ishtiyaq Baig
-**LinkedIn:** https://www.linkedin.com/in/mirzaishtiyaqbaig/
-**GitHub:** https://github.com/mirza-ishtiyaq
+**Author:** Mirza Ishtiyaq Baig — Data Analyst, Supply Chain & Service Operations Analytics
+**LinkedIn:** [linkedin.com/in/mirzaishtiyaqbaig](https://www.linkedin.com/in/mirzaishtiyaqbaig/)
+**GitHub:** [github.com/mirza-ishtiyaq](https://github.com/mirza-ishtiyaq)
