@@ -23,7 +23,7 @@ The result: leadership had **no single source of truth** for order fulfilment pe
 
 ## The Data
 
-Simulated operational datasets: the public [Brazilian E-Commerce (Olist) dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) — **~99,000 real orders** across customers, orders, items, products, sellers, and geolocation tables.
+Real operational datasets: the public [Brazilian E-Commerce (Olist) dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) — **~99,000 real orders** across customers, orders, items, products, sellers, and geolocation tables.
 
 > **Note:** Raw CSVs are **not** checked into this repo due to file size (`data/datasets/` is an intentionally empty placeholder). Download the dataset from Kaggle and land it in your own Bronze source location to reproduce the pipeline end-to-end.
 
